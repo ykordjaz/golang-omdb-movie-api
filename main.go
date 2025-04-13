@@ -88,15 +88,15 @@ func handleMovie(w http.ResponseWriter, r *http.Request){
 }
 
 func handleSearch(w http.ResponseWriter, r *http.Request){
-	searchQuery := r.URL.Query().Get(("title"))
-	if searchQuery == "" {
-		http.Error(w, "Missing search query parameters", http.StatusInternalServerError)
+	searchKeyword := r.URL.Query().Get(("title"))
+	if searchKeyword == "" {
+		http.Error(w, "Missing search keyword!", http.StatusInternalServerError)
 		return
 	}
 
 	apiKey := os.Getenv(("OMDB_API_KEY"))
 	endpoint := "https://www.omdbapi.com/"
-	movieTitleQuery := url.QueryEscape(searchQuery)
+	movieTitleQuery := url.QueryEscape(searchKeyword)
 
 	fullURL := fmt.Sprintf("%s?apikey=%s&s=%s", endpoint, apiKey, movieTitleQuery)
 
