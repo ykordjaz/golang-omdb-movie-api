@@ -18,13 +18,19 @@ type Movie struct {
 	Poster string `json:"Poster"`
 }
 
+// Create Search struct which holds an array of Movie structs
+type SearchResponse struct {
+	Search []Movie `json:"Search"`
+}
+
 func main() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 	// call the handleMovie function when /movie is visited
-	http.HandleFunc("/", handleMovie)
+	http.HandleFunc("/movie", handleMovie)
+  http.HandleFunc("/search", handleSearch)
 	fmt.Println("Server running at http://localhost.8080")
 
 	// start a web server at port 8080 and use the default handler
@@ -79,4 +85,41 @@ func handleMovie(w http.ResponseWriter, r *http.Request){
 	// Return JSON to user
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(movie)
+}
+
+func handleSearch(w http.ResponseWriter, r *http.Request){
+	searchQuery := r.URL.Query().Get(("title"))
+	if searchQuery == "" {
+		http.Error(w, "Missing search query parameters", http.StatusInternalServerError)
+		return
+	}
+
+	apiKey := os.Getenv(("OMDB_API_KEY"))
+	endpoint := "https://www.omdbapi.com/"
+	movieTitleQuery := url.QueryEscape(searchQuery)
+
+	fullURL := fmt.Sprintf("%s?apikey=%s&s=%s", endpoint, apiKey, movieTitleQuery)
+
+	res, err := http.Get(fullURL)
+  if err != nil {
+		http.Error(w, "Error fetching results", http.StatusInternalServerError)
+		return
+	}
+
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		http.Error(w, "Failed to read response from OMDB", http.StatusInternalServerError)
+		return
+	}
+
+	var result SearchResponse
+	if err := json.Unmarshal(body, &result); err != nil {
+		http.Error(w, "Error parsing", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
 }
