@@ -87,6 +87,7 @@ func handleMovie(w http.ResponseWriter, r *http.Request){
 	json.NewEncoder(w).Encode(movie)
 }
 
+// Uses s=keyword to find multiple possible matches (e.g., all movies with “batman”)
 func handleSearch(w http.ResponseWriter, r *http.Request){
 	searchKeyword := r.URL.Query().Get(("title"))
 	if searchKeyword == "" {
